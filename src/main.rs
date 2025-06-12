@@ -1,9 +1,10 @@
 // 8 way random walk with minifb and a 5px dot
 // Now with added wind!
+// now using unirand crate for random numbers
 // written for maths.earth 20250110 
 
 use minifb::{Key, MouseButton, Window, WindowOptions};
-use rand::Rng;
+use unirand::MarsagliaUniRng;
 
 // Define the size of the window.
 const WIDTH: usize = 800;
@@ -19,56 +20,53 @@ const FADE_SPEED: u16 = 15;
 struct Walker {
     x: f32,
     y: f32,
+    rng: MarsagliaUniRng,
 }
 
 // Define methods for the Walker.
 impl Walker {
     fn new() -> Self {
+        let mut rng = MarsagliaUniRng::new();
+        rng.rinit(123456); // You can choose any seed
         Walker {
             x: (WIDTH / 2) as f32,
             y: (HEIGHT / 2) as f32,
+            rng,
         }
     }
 
     fn step(&mut self) {
-        // 8 random directions.
-        let mut rng = rand::thread_rng();
-        let angle = rng.gen_range(0.0_f32..360.0_f32).to_radians();
-        let dx = angle.cos();
-        let dy = angle.sin();
+        // Generate a random angle using unirand
+        let angle = self.rng.uni() * 360.0f32;
+        let radians = angle.to_radians();
+        let dx = radians.cos();
+        let dy = radians.sin();
 
         self.x = (self.x + dx).clamp(0.0, (WIDTH - 1) as f32);
         self.y = (self.y + dy).clamp(0.0, (HEIGHT - 1) as f32);
     }
 
+    // blow_away and show stay the same
     fn blow_away(&mut self, mouse_x: f32, mouse_y: f32) {
-        // Calculate direction vector from the mouse pointer to the walker.
         let delta_x = self.x - mouse_x;
         let delta_y = self.y - mouse_y;
-
-        // Normalise the vector to calculate the unit direction vector.
         let distance = (delta_x.powi(2) + delta_y.powi(2)).sqrt();
         if distance > 0.0 {
             let unit_x = delta_x / distance;
             let unit_y = delta_y / distance;
-
-            // Move in the direction away from the mouse.
             self.x = (self.x + unit_x).clamp(0.0, (WIDTH - 1) as f32);
             self.y = (self.y + unit_y).clamp(0.0, (HEIGHT - 1) as f32);
         }
     }
 
     fn show(&self, buffer: &mut [u32]) {
-        // Plot a small DOT_SIZE x DOT_SIZE block around (x, y).
         let half = (DOT_SIZE / 2) as isize;
-
         for dy in -half..=half {
             for dx in -half..=half {
                 let px = self.x as isize + dx;
                 let py = self.y as isize + dy;
-
                 if px >= 0 && px < WIDTH as isize && py >= 0 && py < HEIGHT as isize {
-                    buffer[py as usize * WIDTH + px as usize] = 0x000000; // black
+                    buffer[py as usize * WIDTH + px as usize] = 0x000000;
                 }
             }
         }
