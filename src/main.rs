@@ -82,7 +82,7 @@ fn main() {
         WindowOptions::default(),
     )
     .unwrap_or_else(|e| {
-        panic!("Failed to create window: {}", e);
+        panic!("Failed to create window: {e}");
     });
 
     let mut temp_pixel: u32;
@@ -117,8 +117,6 @@ fn main() {
 
         // Check mouse position and button state.
         if let Some((mouse_x, mouse_y)) = window.get_mouse_pos(minifb::MouseMode::Clamp) {
-            let mouse_x = mouse_x as f32;
-            let mouse_y = mouse_y as f32;
 
             if window.get_mouse_down(MouseButton::Left) {
                 walker.blow_away(mouse_x, mouse_y);
